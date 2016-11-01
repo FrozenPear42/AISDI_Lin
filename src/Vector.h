@@ -5,265 +5,270 @@
 #include <initializer_list>
 #include <stdexcept>
 
-namespace aisdi
-{
+namespace aisdi {
 
-template <typename Type>
-class Vector
-{
-public:
-  using difference_type = std::ptrdiff_t;
-  using size_type = std::size_t;
-  using value_type = Type;
-  using pointer = Type*;
-  using reference = Type&;
-  using const_pointer = const Type*;
-  using const_reference = const Type&;
+    template< typename Type >
+    class Vector {
+    public:
+        using difference_type = std::ptrdiff_t;
+        using size_type = std::size_t;
+        using value_type = Type;
+        using pointer = Type*;
+        using reference = Type&;
+        using const_pointer = const Type*;
+        using const_reference = const Type&;
 
-  class ConstIterator;
-  class Iterator;
-  using iterator = Iterator;
-  using const_iterator = ConstIterator;
+        class ConstIterator;
 
-  Vector()
-  {}
+        class Iterator;
 
-  Vector(std::initializer_list<Type> l)
-  {
-    (void)l; // disables "unused argument" warning, can be removed when method is implemented.
-    throw std::runtime_error("TODO");
-  }
+        using iterator = Iterator;
+        using const_iterator = ConstIterator;
 
-  Vector(const Vector& other)
-  {
-    (void)other;
-    throw std::runtime_error("TODO");
-  }
+        Vector() : mCapacity(INIT_CAPACITY), mCount(0), mData(new Type[INIT_CAPACITY]) { }
 
-  Vector(Vector&& other)
-  {
-    (void)other;
-    throw std::runtime_error("TODO");
-  }
+        Vector(std::initializer_list<Type> l) : mCapacity((l.size() << 1) >> 1), mCount(l.size()),
+                                                mData(new Type[mCapacity]) {
+            std::size_t idx = 0;
+            for( auto&& elem : l )
+                mData[idx++] = std::move(elem);
+        }
 
-  ~Vector()
-  {}
+        Vector(const Vector& other) : mCapacity(other.mCapacity), mCount(other.mCount), mData(new Type[mCapacity]) {
+            for( std::size_t idx = 0; idx < other.mCount; idx++ )
+                mData[idx] = other.mData[idx];
+        }
 
-  Vector& operator=(const Vector& other)
-  {
-    (void)other;
-    throw std::runtime_error("TODO");
-  }
+        Vector(Vector&& other) : mCapacity(std::move(other.mCapacity)),
+                                 mCount(std::move(other.mCount)),
+                                 mData(std::move(other.mData)) { }
 
-  Vector& operator=(Vector&& other)
-  {
-    (void)other;
-    throw std::runtime_error("TODO");
-  }
+        ~Vector() {
+            delete mData;
+        }
 
-  bool isEmpty() const
-  {
-    std::runtime_error("TODO");
-    throw std::runtime_error("TODO");
-  }
+        Vector& operator=(const Vector& other) {
+            if( mCapacity != other.mCapacity )
+                realocate(other.mCapacity);
+            for( std::size_t idx = 0; idx < other.mCapacity; idx++ )
+                mData[idx] = other.mData[idx];
+            return *this;
+        }
 
-  size_type getSize() const
-  {
-    throw std::runtime_error("TODO");
-  }
+        Vector& operator=(Vector&& other) {
+            delete mData;
+            mData = std::move(other.mData);
+            mCapacity = std::move(other.mCapacity);
+            mCount = std::move(other.mCount);
+            return *this;
+        }
 
-  void append(const Type& item)
-  {
-    (void)item;
-    throw std::runtime_error("TODO");
-  }
+        bool isEmpty() const {
+            return mCount == 0;
+        }
 
-  void prepend(const Type& item)
-  {
-    (void)item;
-    throw std::runtime_error("TODO");
-  }
+        size_type getSize() const {
+            return mCount;
+        }
 
-  void insert(const const_iterator& insertPosition, const Type& item)
-  {
-    (void)insertPosition;
-    (void)item;
-    throw std::runtime_error("TODO");
-  }
+        void append(const Type& item) {
+            insert_at(item, mCount);
+        }
 
-  Type popFirst()
-  {
-    throw std::runtime_error("TODO");
-  }
+        void prepend(const Type& item) {
+            insert_at(item, 0);
+        }
 
-  Type popLast()
-  {
-    throw std::runtime_error("TODO");
-  }
+        void insert(const const_iterator& insertPosition, const Type& item) {
+            insert_at(item, insertPosition.mIndex);
+        }
 
-  void erase(const const_iterator& possition)
-  {
-    (void)possition;
-    throw std::runtime_error("TODO");
-  }
+        Type popFirst() {
+            if( mCount == 0 ) throw std::out_of_range("Can not popFirst, vector is empty");
+            Type item = std::move(mData[0]);
+            erase_at(0);
+            return item;
+        }
 
-  void erase(const const_iterator& firstIncluded, const const_iterator& lastExcluded)
-  {
-    (void)firstIncluded;
-    (void)lastExcluded;
-    throw std::runtime_error("TODO");
-  }
+        Type popLast() {
+            if( mCount == 0 ) throw std::out_of_range("Can not popLast, vector is empty");
+            return mData[--mCount];
+        }
 
-  iterator begin()
-  {
-    throw std::runtime_error("TODO");
-  }
+        void erase(const const_iterator& position) {
+            erase_at(position.mIndex);
+        }
 
-  iterator end()
-  {
-    throw std::runtime_error("TODO");
-  }
+        void erase(const const_iterator& firstIncluded, const const_iterator& lastExcluded) {
+            std::size_t first = firstIncluded.mIndex;
+            std::size_t last = lastExcluded.mIndex;
+            for( ; last != mCount; first++, last++ )
+                mData[first] = mData[last];
+            mCount = first + 1;
+        }
 
-  const_iterator cbegin() const
-  {
-    throw std::runtime_error("TODO");
-  }
+        iterator begin() {
+            return Iterator(*this, 0);
+        }
 
-  const_iterator cend() const
-  {
-    throw std::runtime_error("TODO");
-  }
+        iterator end() {
+            return Iterator(*this, mCount);
+        }
 
-  const_iterator begin() const
-  {
-    return cbegin();
-  }
+        const_iterator cbegin() const {
+            return ConstIterator(*this, 0);
+        }
 
-  const_iterator end() const
-  {
-    return cend();
-  }
-};
+        const_iterator cend() const {
+            return ConstIterator(*this, mCount);
+        }
 
-template <typename Type>
-class Vector<Type>::ConstIterator
-{
-public:
-  using iterator_category = std::bidirectional_iterator_tag;
-  using value_type = typename Vector::value_type;
-  using difference_type = typename Vector::difference_type;
-  using pointer = typename Vector::const_pointer;
-  using reference = typename Vector::const_reference;
+        const_iterator begin() const {
+            return cbegin();
+        }
 
-  explicit ConstIterator()
-  {}
+        const_iterator end() const {
+            return cend();
+        }
+    private:
+        const int INIT_CAPACITY = 16;
+        std::size_t mCapacity;
+        std::size_t mCount;
+        Type* mData;
 
-  reference operator*() const
-  {
-    throw std::runtime_error("TODO");
-  }
+        friend class ConstIterator;
 
-  ConstIterator& operator++()
-  {
-    throw std::runtime_error("TODO");
-  }
+        void realocate() {
+        }
 
-  ConstIterator operator++(int)
-  {
-    throw std::runtime_error("TODO");
-  }
+        void realocate(std::size_t pSize) {
+            (void)pSize;
+        }
 
-  ConstIterator& operator--()
-  {
-    throw std::runtime_error("TODO");
-  }
+        void insert_at(const Type& pValue, std::size_t pPosition) {
+            mData[pPosition] = pValue; //TODO:
+        }
 
-  ConstIterator operator--(int)
-  {
-    throw std::runtime_error("TODO");
-  }
+        void erase_at(std::size_t pIdx) {
+            for( std::size_t idx = pIdx; idx + 1 < mCount; idx++ )
+                mData[idx] = mData[idx + 1];
+        }
+    };
 
-  ConstIterator operator+(difference_type d) const
-  {
-    (void)d;
-    throw std::runtime_error("TODO");
-  }
+    template< typename Type >
+    class Vector<Type>::ConstIterator {
+    public:
+        using iterator_category = std::bidirectional_iterator_tag;
+        using value_type = typename Vector::value_type;
+        using difference_type = typename Vector::difference_type;
+        using pointer = typename Vector::const_pointer;
+        using reference = typename Vector::const_reference;
 
-  ConstIterator operator-(difference_type d) const
-  {
-    (void)d;
-    throw std::runtime_error("TODO");
-  }
+        friend class Vector<Type>;
 
-  bool operator==(const ConstIterator& other) const
-  {
-    (void)other;
-    throw std::runtime_error("TODO");
-  }
+        explicit ConstIterator(const Vector<Type>& pVector, std::size_t pIdx) : mVector(pVector), mIndex(pIdx) { }
+        ConstIterator(const ConstIterator& pOther) : mVector(pOther.mVector), mIndex(pOther.mIndex) { }
 
-  bool operator!=(const ConstIterator& other) const
-  {
-    (void)other;
-    throw std::runtime_error("TODO");
-  }
-};
+        reference operator*() const {
+            return mVector.mData[mIndex];
+        }
 
-template <typename Type>
-class Vector<Type>::Iterator : public Vector<Type>::ConstIterator
-{
-public:
-  using pointer = typename Vector::pointer;
-  using reference = typename Vector::reference;
+        ConstIterator& operator++() {
+            if( mIndex == mVector.mCount - 1 )
+                throw std::out_of_range("Iterator out of range");
+            mIndex++;
+            return *this;
+        }
 
-  explicit Iterator()
-  {}
+        ConstIterator operator++(int) {
+            ConstIterator it(*this);
+            operator++();
+            return it;
+        }
 
-  Iterator(const ConstIterator& other)
-    : ConstIterator(other)
-  {}
+        ConstIterator& operator--() {
+            if( mIndex == 0 )
+                throw std::out_of_range("Iterator out of range");
+            mIndex--;
+            return *this;
+        }
 
-  Iterator& operator++()
-  {
-    ConstIterator::operator++();
-    return *this;
-  }
+        ConstIterator operator--(int) {
+            ConstIterator it(*this);
+            operator--();
+            return it;
+        }
 
-  Iterator operator++(int)
-  {
-    auto result = *this;
-    ConstIterator::operator++();
-    return result;
-  }
+        ConstIterator operator+(difference_type d) const {
+            std::size_t new_idx = mIndex + d;
+            if( new_idx >= mVector.mCount )
+                throw std::out_of_range("Iterator out of range");
+            return ConstIterator(mVector, new_idx);
+        }
 
-  Iterator& operator--()
-  {
-    ConstIterator::operator--();
-    return *this;
-  }
+        ConstIterator operator-(difference_type d) const {
+            if( mIndex < (std::size_t) d )
+                throw std::out_of_range("Iterator out of range");
+            return ConstIterator(mVector, mIndex - d);
+        }
 
-  Iterator operator--(int)
-  {
-    auto result = *this;
-    ConstIterator::operator--();
-    return result;
-  }
+        bool operator==(const ConstIterator& other) const {
+            return (mIndex == other.mIndex) && (mVector.mData == other.mVector.mData);
+        }
 
-  Iterator operator+(difference_type d) const
-  {
-    return ConstIterator::operator+(d);
-  }
+        bool operator!=(const ConstIterator& other) const {
+            return !operator==(other);
+        }
+    protected:
+        const Vector<Type>& mVector;
+        std::size_t mIndex;
+    };
 
-  Iterator operator-(difference_type d) const
-  {
-    return ConstIterator::operator-(d);
-  }
+    template< typename Type >
+    class Vector<Type>::Iterator : public Vector<Type>::ConstIterator {
+    public:
+        using pointer = typename Vector::pointer;
+        using reference = typename Vector::reference;
 
-  reference operator*() const
-  {
-    // ugly cast, yet reduces code duplication.
-    return const_cast<reference>(ConstIterator::operator*());
-  }
-};
+        explicit Iterator(const Vector<Type>& pVector, std::size_t pIdx) : ConstIterator(pVector, pIdx) { }
+
+        Iterator(const ConstIterator& other) : ConstIterator(other) { }
+
+        Iterator& operator++() {
+            ConstIterator::operator++();
+            return *this;
+        }
+
+        Iterator operator++(int) {
+            auto result = *this;
+            ConstIterator::operator++();
+            return result;
+        }
+
+        Iterator& operator--() {
+            ConstIterator::operator--();
+            return *this;
+        }
+
+        Iterator operator--(int) {
+            auto result = *this;
+            ConstIterator::operator--();
+            return result;
+        }
+
+        Iterator operator+(difference_type d) const {
+            return ConstIterator::operator+(d);
+        }
+
+        Iterator operator-(difference_type d) const {
+            return ConstIterator::operator-(d);
+        }
+
+        reference operator*() const {
+            // ugly cast, yet reduces code duplication.
+            return const_cast<reference>(ConstIterator::operator*());
+        }
+    };
 
 }
 
