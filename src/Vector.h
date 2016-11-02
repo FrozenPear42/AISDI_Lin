@@ -44,7 +44,7 @@ namespace aisdi {
                                  mData(std::move(other.mData)) { }
 
         ~Vector() {
-            delete mData;
+            delete[] mData;
         }
 
         Vector& operator=(const Vector& other) {
@@ -56,7 +56,7 @@ namespace aisdi {
         }
 
         Vector& operator=(Vector&& other) {
-            delete mData;
+            delete[] mData;
             mData = std::move(other.mData);
             mCapacity = std::move(other.mCapacity);
             mCount = std::move(other.mCount);
