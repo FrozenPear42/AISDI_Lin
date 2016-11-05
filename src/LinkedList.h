@@ -7,7 +7,7 @@
 
 namespace aisdi {
 
-    template<typename Type>
+    template< typename Type >
     class LinkedList {
     public:
         using difference_type = std::ptrdiff_t;
@@ -38,13 +38,13 @@ namespace aisdi {
         }
 
         LinkedList(std::initializer_list<Type> l) : LinkedList() {
-            for (auto&& element : l)
+            for( auto&& element : l )
                 append(std::forward<decltype(element)>(element));
             mCount = l.size();
         }
 
         LinkedList(const LinkedList& other) : LinkedList() {
-            for (auto&& element : other)
+            for( auto&& element : other )
                 append(element);
             mCount = other.mCount;
         }
@@ -68,7 +68,7 @@ namespace aisdi {
 
         LinkedList& operator=(const LinkedList& other) {
             clear();
-            for (auto&& element : other)
+            for( auto&& element : other )
                 append(element);
             mCount = other.mCount;
             return *this;
@@ -96,31 +96,23 @@ namespace aisdi {
         }
 
         void append(const Type& item) {
-            Node* node = new NodeExtended(mTail->prev, mTail, item);
-            mTail->prev->next = node;
-            mTail->prev = node;
-            mCount++;
+            insert(end(), item);
         }
 
         void prepend(const Type& item) {
-            Node* node = new NodeExtended(mHead, mHead->next, item);
-            mHead->next->prev = node;
-            mHead->next = node;
-            ++mCount;
+            insert(begin(), item);
         }
 
         void insert(const const_iterator& insertPosition, const Type& item) {
-            Node* after = insertPosition.mNode;
-            if (after == mTail)
-                return append(item);
-            Node* node = new NodeExtended(after->prev, after->next, item);
-            after->next->prev = node;
-            after->prev->next = node;
+            Node* before = insertPosition.mNode;
+            Node* node = new NodeExtended(before->prev, before, item);
+            before->prev->next = node;
+            before->prev = node;
             ++mCount;
         }
 
         Type popFirst() {
-            if (mHead->next == mTail)
+            if( mHead->next == mTail )
                 throw std::out_of_range("Popping from empty list");
 
             Type ret = dynamic_cast<NodeExtended*>(mHead->next)->data;
@@ -129,22 +121,41 @@ namespace aisdi {
         }
 
         Type popLast() {
-            if (mHead->next == mTail)
+            if( mHead->next == mTail )
                 throw std::out_of_range("Popping from empty list");
+
             Type ret = dynamic_cast<NodeExtended*>(mTail->prev)->data;
             erase(--end());
             return ret;
         }
 
         void erase(const const_iterator& possition) {
-            (void) possition;
-            throw std::runtime_error("TODO");
+            Node* node = possition.mNode;
+            if( node == mTail )
+                throw std::out_of_range("Removing end of list");
+            node->prev->next = node->next;
+            node->next->prev = node->prev;
+            delete node;
+            --mCount;
         }
 
         void erase(const const_iterator& firstIncluded, const const_iterator& lastExcluded) {
-            (void) firstIncluded;
-            (void) lastExcluded;
-            throw std::runtime_error("TODO");
+            Node* first = firstIncluded.mNode;
+            Node* last = lastExcluded.mNode;
+            if( first == last )
+                return;
+
+            first->prev->next = last;
+            last->prev = first->prev;
+
+            Node* node = first;
+
+            while( first != last ) {
+                node = first;
+                first = first->next;
+                delete node;
+                --mCount;
+            }
         }
 
         iterator begin() {
@@ -177,9 +188,9 @@ namespace aisdi {
         std::size_t mCount;
 
         void clear() {
-            if (mCount == 0) return;
+            if( mCount == 0 ) return;
             Node* node = mHead->next->next;
-            while (node != mTail) {
+            while( node != mTail ) {
                 delete node->prev;
                 node = node->next;
             }
@@ -188,8 +199,7 @@ namespace aisdi {
         }
     };
 
-
-    template<typename Type>
+    template< typename Type >
     struct LinkedList<Type>::Node {
         Node* prev;
         Node* next;
@@ -199,7 +209,7 @@ namespace aisdi {
         virtual ~Node() { }
     };
 
-    template<typename Type>
+    template< typename Type >
     struct LinkedList<Type>::NodeExtended : public LinkedList<Type>::Node {
         Type data;
 
@@ -210,7 +220,7 @@ namespace aisdi {
         virtual ~NodeExtended() { }
     };
 
-    template<typename Type>
+    template< typename Type >
     class LinkedList<Type>::ConstIterator {
     public:
         using iterator_category = std::bidirectional_iterator_tag;
@@ -224,13 +234,13 @@ namespace aisdi {
         explicit ConstIterator(const LinkedList& pList, Node* pNode) : mList(pList), mNode(pNode) { }
 
         reference operator*() const {
-            if (mNode == mList.mTail || mNode == mList.mHead)
+            if( mNode == mList.mTail || mNode == mList.mHead )
                 throw std::out_of_range("Dereferencing invalid iterator");
             return dynamic_cast<NodeExtended*>(mNode)->data;
         }
 
         ConstIterator& operator++() {
-            if (mNode == mList.mTail)
+            if( mNode == mList.mTail )
                 throw std::out_of_range("Trying to increment end iterator");
             mNode = mNode->next;
             return *this;
@@ -243,7 +253,7 @@ namespace aisdi {
         }
 
         ConstIterator& operator--() {
-            if (mNode->prev == mList.mHead)
+            if( mNode->prev == mList.mHead )
                 throw std::out_of_range("Trying to decrement end iterator");
             mNode = mNode->prev;
             return *this;
@@ -258,7 +268,7 @@ namespace aisdi {
         ConstIterator operator+(difference_type d) const {
             Node* node = mNode;
             difference_type offset = 0;
-            while (node != mList.mTail && offset - d < 0) {
+            while( node != mList.mTail && offset - d < 0 ) {
                 node = node->next;
                 offset++;
             }
@@ -268,7 +278,7 @@ namespace aisdi {
         ConstIterator operator-(difference_type d) const {
             Node* node = mNode;
             difference_type offset = 0;
-            while (node != mList.mHead && offset - d < 0) {
+            while( node != mList.mHead && offset - d < 0 ) {
                 node = node->prev;
                 offset++;
             }
@@ -288,7 +298,7 @@ namespace aisdi {
         Node* mNode;
     };
 
-    template<typename Type>
+    template< typename Type >
     class LinkedList<Type>::Iterator : public LinkedList<Type>::ConstIterator {
     public:
         using pointer = typename LinkedList::pointer;
