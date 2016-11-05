@@ -39,9 +39,17 @@ namespace aisdi {
                 mData[idx] = other.mData[idx];
         }
 
-        Vector(Vector&& other) : mCapacity(std::move(other.mCapacity)),
-                                 mCount(std::move(other.mCount)),
-                                 mData(std::move(other.mData)) { }
+        Vector(Vector&& other) : Vector() {
+            std::size_t capacity = mCapacity;
+            std::size_t count = mCount;
+            Type* data = mData;
+            mCapacity = std::move(other.mCapacity);
+            mCount = std::move(other.mCount);
+            mData = std::move(other.mData);
+            other.mCapacity = capacity;
+            other.mCount = count;
+            other.mData = data;
+        }
 
         ~Vector() {
             delete[] mData;
@@ -56,10 +64,13 @@ namespace aisdi {
         }
 
         Vector& operator=(Vector&& other) {
-            delete[] mData;
-            mData = std::move(other.mData);
+            Type* data = mData;
             mCapacity = std::move(other.mCapacity);
             mCount = std::move(other.mCount);
+            mData = std::move(other.mData);
+            other.mCapacity = INIT_CAPACITY;
+            other.mCount = 0;
+            other.mData = data;
             return *this;
         }
 
@@ -92,7 +103,9 @@ namespace aisdi {
 
         Type popLast() {
             if( mCount == 0 ) throw std::out_of_range("Can not popLast, vector is empty");
-            return mData[--mCount];
+            Type item = std::move(mData[mCount - 1]);
+            erase_at(mCount - 1);
+            return item;
         }
 
         void erase(const const_iterator& position) {
@@ -102,7 +115,11 @@ namespace aisdi {
         void erase(const const_iterator& firstIncluded, const const_iterator& lastExcluded) {
             std::size_t first = firstIncluded.mIndex;
             std::size_t last = lastExcluded.mIndex;
-            for( ; last != mCount; first++, last++ )
+
+            if( last + 1 == mCount )
+                throw std::out_of_range("Erasing end");
+
+            for( ; last < mCount; first++, last++ )
                 mData[first] = mData[last];
             mCount = first + 1;
         }
@@ -139,19 +156,37 @@ namespace aisdi {
         friend class ConstIterator;
 
         void realocate() {
+            mCapacity *= 2;
+            realocate(mCapacity);
         }
 
         void realocate(std::size_t pSize) {
-            (void)pSize;
+            if( pSize < mCapacity )
+                throw std::exception();
+            Type* tmp = new Type[pSize];
+            for( std::size_t idx = 0; idx < mCount; idx++ )
+                tmp[idx] = mData[idx];
+            delete[] mData;
+            mData = tmp;
         }
 
         void insert_at(const Type& pValue, std::size_t pPosition) {
-            mData[pPosition] = pValue; //TODO:
+            if( mCount == mCapacity )
+                realocate();
+
+            for( std::size_t idx = mCount; idx > pPosition; idx-- )
+                mData[idx] = mData[idx - 1];
+            mData[pPosition] = pValue;
+            ++mCount;
+
         }
 
         void erase_at(std::size_t pIdx) {
+            if( pIdx < 0 || pIdx >= mCount )
+                throw std::out_of_range("Erasing out of range");
             for( std::size_t idx = pIdx; idx + 1 < mCount; idx++ )
                 mData[idx] = mData[idx + 1];
+            --mCount;
         }
     };
 
@@ -170,11 +205,13 @@ namespace aisdi {
         ConstIterator(const ConstIterator& pOther) : mVector(pOther.mVector), mIndex(pOther.mIndex) { }
 
         reference operator*() const {
+            if( mIndex == mVector.mCount )
+                throw std::out_of_range("Dereferencing end iterator");
             return mVector.mData[mIndex];
         }
 
         ConstIterator& operator++() {
-            if( mIndex == mVector.mCount - 1 )
+            if( mIndex == mVector.mCount )
                 throw std::out_of_range("Iterator out of range");
             mIndex++;
             return *this;
@@ -202,7 +239,7 @@ namespace aisdi {
         ConstIterator operator+(difference_type d) const {
             std::size_t new_idx = mIndex + d;
             if( new_idx >= mVector.mCount )
-                throw std::out_of_range("Iterator out of range");
+                return ConstIterator(mVector, mVector.mCount);
             return ConstIterator(mVector, new_idx);
         }
 
