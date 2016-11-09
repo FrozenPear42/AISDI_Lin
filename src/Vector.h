@@ -56,10 +56,11 @@ namespace aisdi {
         }
 
         Vector& operator=(const Vector& other) {
-            if( mCapacity != other.mCapacity )
+            if( mCapacity <= other.mCapacity )
                 realocate(other.mCapacity);
             for( std::size_t idx = 0; idx < other.mCapacity; idx++ )
                 mData[idx] = other.mData[idx];
+            mCount = other.mCount;
             return *this;
         }
 
@@ -116,12 +117,14 @@ namespace aisdi {
             std::size_t first = firstIncluded.mIndex;
             std::size_t last = lastExcluded.mIndex;
 
-            if( last + 1 == mCount )
+            if( last > mCount )
                 throw std::out_of_range("Erasing end");
+
+            std::size_t diff = last - first;
 
             for( ; last < mCount; first++, last++ )
                 mData[first] = mData[last];
-            mCount = first + 1;
+            mCount = mCount - diff;
         }
 
         iterator begin() {
