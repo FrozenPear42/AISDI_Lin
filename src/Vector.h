@@ -27,7 +27,7 @@ namespace aisdi {
 
         Vector() : mCapacity(INIT_CAPACITY), mCount(0), mData(new Type[INIT_CAPACITY]) { }
 
-        Vector(std::initializer_list<Type> l) : mCapacity((l.size() << 1) >> 1), mCount(l.size()),
+        Vector(std::initializer_list<Type> l) : mCapacity(l.size() * 2), mCount(l.size()),
                                                 mData(new Type[mCapacity]) {
             std::size_t idx = 0;
             for (auto&& elem : l)
