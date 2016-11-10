@@ -1,0 +1,2 @@
+{ 'benchmark_name' : 'PopFirst', 'experiment_name' : 'Vector', 'time_type' : 'milliseconds', 'factor_name' : 'Elements', 'factors' : [ 100, 1000, 10000, 50000, 100000, 500000, 1000000 ], 'timings' : [ 0, 0, 2, 82, 497, 13345, 97857 ] } 
+{ 'benchmark_name' : 'PopFirst', 'experiment_name' : 'List', 'time_type' : 'milliseconds', 'factor_name' : 'Elements', 'factors' : [ 100, 1000, 10000, 50000, 100000, 500000, 1000000 ], 'timings' : [ 0, 0, 0, 1, 2, 13, 26 ] } 
