@@ -160,8 +160,7 @@ namespace aisdi {
         friend class ConstIterator;
 
         void realocate() {
-            mCapacity *= 2;
-            realocate(mCapacity);
+            realocate(mCapacity * 2);
         }
 
         void realocate(std::size_t pSize) {
@@ -172,6 +171,7 @@ namespace aisdi {
                 tmp[idx] = mData[idx];
             delete[] mData;
             mData = tmp;
+            mCapacity = pSize;
         }
 
         void insert_at(const Type& pValue, std::size_t pPosition) {
