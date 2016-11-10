@@ -7,7 +7,7 @@
 
 namespace aisdi {
 
-    template< typename Type >
+    template<typename Type>
     class Vector {
     public:
         using difference_type = std::ptrdiff_t;
@@ -30,12 +30,12 @@ namespace aisdi {
         Vector(std::initializer_list<Type> l) : mCapacity((l.size() << 1) >> 1), mCount(l.size()),
                                                 mData(new Type[mCapacity]) {
             std::size_t idx = 0;
-            for( auto&& elem : l )
+            for (auto&& elem : l)
                 mData[idx++] = std::move(elem);
         }
 
         Vector(const Vector& other) : mCapacity(other.mCapacity), mCount(other.mCount), mData(new Type[mCapacity]) {
-            for( std::size_t idx = 0; idx < other.mCount; idx++ )
+            for (std::size_t idx = 0; idx < other.mCount; ++idx)
                 mData[idx] = other.mData[idx];
         }
 
@@ -56,9 +56,9 @@ namespace aisdi {
         }
 
         Vector& operator=(const Vector& other) {
-            if( mCapacity <= other.mCapacity )
+            if (mCapacity <= other.mCapacity)
                 realocate(other.mCapacity);
-            for( std::size_t idx = 0; idx < other.mCapacity; idx++ )
+            for (std::size_t idx = 0; idx < other.mCapacity; ++idx)
                 mData[idx] = other.mData[idx];
             mCount = other.mCount;
             return *this;
@@ -96,14 +96,14 @@ namespace aisdi {
         }
 
         Type popFirst() {
-            if( mCount == 0 ) throw std::out_of_range("Can not popFirst, vector is empty");
+            if (mCount == 0) throw std::out_of_range("Can not popFirst, vector is empty");
             Type item = std::move(mData[0]);
             erase_at(0);
             return item;
         }
 
         Type popLast() {
-            if( mCount == 0 ) throw std::out_of_range("Can not popLast, vector is empty");
+            if (mCount == 0) throw std::out_of_range("Can not popLast, vector is empty");
             Type item = std::move(mData[mCount - 1]);
             erase_at(mCount - 1);
             return item;
@@ -117,12 +117,12 @@ namespace aisdi {
             std::size_t first = firstIncluded.mIndex;
             std::size_t last = lastExcluded.mIndex;
 
-            if( last > mCount )
+            if (last > mCount)
                 throw std::out_of_range("Erasing end");
 
             std::size_t diff = last - first;
 
-            for( ; last < mCount; first++, last++ )
+            for (; last < mCount; ++first, ++last)
                 mData[first] = mData[last];
             mCount = mCount - diff;
         }
@@ -150,6 +150,7 @@ namespace aisdi {
         const_iterator end() const {
             return cend();
         }
+
     private:
         const int INIT_CAPACITY = 16;
         std::size_t mCapacity;
@@ -164,20 +165,20 @@ namespace aisdi {
         }
 
         void realocate(std::size_t pSize) {
-            if( pSize < mCapacity )
+            if (pSize < mCapacity)
                 throw std::exception();
             Type* tmp = new Type[pSize];
-            for( std::size_t idx = 0; idx < mCount; idx++ )
+            for (std::size_t idx = 0; idx < mCount; ++idx)
                 tmp[idx] = mData[idx];
             delete[] mData;
             mData = tmp;
         }
 
         void insert_at(const Type& pValue, std::size_t pPosition) {
-            if( mCount == mCapacity )
+            if (mCount == mCapacity)
                 realocate();
 
-            for( std::size_t idx = mCount; idx > pPosition; idx-- )
+            for (std::size_t idx = mCount; idx > pPosition; --idx)
                 mData[idx] = mData[idx - 1];
             mData[pPosition] = pValue;
             ++mCount;
@@ -185,15 +186,15 @@ namespace aisdi {
         }
 
         void erase_at(std::size_t pIdx) {
-            if( pIdx < 0 || pIdx >= mCount )
+            if (pIdx >= mCount)
                 throw std::out_of_range("Erasing out of range");
-            for( std::size_t idx = pIdx; idx + 1 < mCount; idx++ )
+            for (std::size_t idx = pIdx; idx + 1 < mCount; ++idx)
                 mData[idx] = mData[idx + 1];
             --mCount;
         }
     };
 
-    template< typename Type >
+    template<typename Type>
     class Vector<Type>::ConstIterator {
     public:
         using iterator_category = std::bidirectional_iterator_tag;
@@ -205,18 +206,19 @@ namespace aisdi {
         friend class Vector<Type>;
 
         explicit ConstIterator(const Vector<Type>& pVector, std::size_t pIdx) : mVector(pVector), mIndex(pIdx) { }
+
         ConstIterator(const ConstIterator& pOther) : mVector(pOther.mVector), mIndex(pOther.mIndex) { }
 
         reference operator*() const {
-            if( mIndex == mVector.mCount )
+            if (mIndex == mVector.mCount)
                 throw std::out_of_range("Dereferencing end iterator");
             return mVector.mData[mIndex];
         }
 
         ConstIterator& operator++() {
-            if( mIndex == mVector.mCount )
+            if (mIndex == mVector.mCount)
                 throw std::out_of_range("Iterator out of range");
-            mIndex++;
+            ++mIndex;
             return *this;
         }
 
@@ -227,9 +229,9 @@ namespace aisdi {
         }
 
         ConstIterator& operator--() {
-            if( mIndex == 0 )
+            if (mIndex == 0)
                 throw std::out_of_range("Iterator out of range");
-            mIndex--;
+            --mIndex;
             return *this;
         }
 
@@ -241,13 +243,13 @@ namespace aisdi {
 
         ConstIterator operator+(difference_type d) const {
             std::size_t new_idx = mIndex + d;
-            if( new_idx >= mVector.mCount )
+            if (new_idx >= mVector.mCount)
                 return ConstIterator(mVector, mVector.mCount);
             return ConstIterator(mVector, new_idx);
         }
 
         ConstIterator operator-(difference_type d) const {
-            if( mIndex < (std::size_t) d )
+            if (mIndex < (std::size_t) d)
                 throw std::out_of_range("Iterator out of range");
             return ConstIterator(mVector, mIndex - d);
         }
@@ -259,12 +261,13 @@ namespace aisdi {
         bool operator!=(const ConstIterator& other) const {
             return !operator==(other);
         }
+
     protected:
         const Vector<Type>& mVector;
         std::size_t mIndex;
     };
 
-    template< typename Type >
+    template<typename Type>
     class Vector<Type>::Iterator : public Vector<Type>::ConstIterator {
     public:
         using pointer = typename Vector::pointer;

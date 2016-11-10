@@ -271,7 +271,7 @@ namespace aisdi {
             difference_type offset = 0;
             while (node != mList.mTail && offset - d < 0) {
                 node = node->next;
-                offset++;
+                ++offset;
             }
             return ConstIterator(mList, node);
         }
@@ -281,7 +281,7 @@ namespace aisdi {
             difference_type offset = 0;
             while (node != mList.mHead && offset - d < 0) {
                 node = node->prev;
-                offset++;
+                ++offset;
             }
             return ConstIterator(mList, node);
         }
